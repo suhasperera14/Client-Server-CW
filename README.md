@@ -385,7 +385,7 @@ In this project, the Discovery endpoint (`GET /api/v1`) returns a `links` object
 
 There are two approaches to consider when returning a list of rooms:
 
-**IDs only approach** — Returns just an array like `["LIB-301", "LAB-101"]`. This has a minimal payload and is fast for large collections, but it requires N+1 follow-up GET requests for details. For a list of 100 rooms, the client must fire 100 individual `GET /rooms/{id}` requests to get names and capacities. This multiplies network latency and server load.
+**IDs only approach** - Returns just an array like `["LIB-301", "LAB-101"]`. This has a minimal payload and is fast for large collections, but it requires N+1 follow-up GET requests for details. For a list of 100 rooms, the client must fire 100 individual `GET /rooms/{id}` requests to get names and capacities. This multiplies network latency and server load.
 
 **Full objects approach** (used in this project) — The client receives everything in one call. This is more appropriate for collections of moderate size. For very large datasets, **pagination** (e.g., `?page=1&size=20`) is the standard mitigation to control response size while still returning full objects per page.
 
@@ -404,7 +404,7 @@ Idempotency means that making the same request multiple times produces the same 
 
 The *server state* is identical after both calls — the room does not exist in either case. The response *status code* differs (200 vs 404), but idempotency is defined by state, not by response code. Therefore this implementation is fully idempotent.
 
-The business constraint (blocking deletion of rooms with sensors) does not affect idempotency — it is a pre-condition check, not a violation of the idempotency property.
+The business constraint (blocking deletion of rooms with sensors) does not affect idempotency - it is a pre-condition check, not a violation of the idempotency property.
 
 ---
 
@@ -418,7 +418,7 @@ If a client sends data with `Content-Type: text/plain` or `Content-Type: applica
 
 1. The runtime scans all resource methods matching the request path and HTTP method.
 2. It filters candidates by matching the request's `Content-Type` against each method's `@Consumes` annotation.
-3. If no method accepts the submitted content type, JAX-RS **automatically returns HTTP 415 Unsupported Media Type** — before any application code runs.
+3. If no method accepts the submitted content type, JAX-RS **automatically returns HTTP 415 Unsupported Media Type** - before any application code runs.
 
 The developer does not need to write any validation code for this. The framework enforces it declaratively. The client receives a `415` response indicating they must change their `Content-Type` header to `application/json`.
 
@@ -433,9 +433,9 @@ The developer does not need to write any validation code for this. The framework
 
 1. **Optional by design:** Query parameters are inherently optional. Omitting `?type=` returns all sensors; including it filters the results. Path segments cannot be optional without defining multiple `@Path` patterns.
 
-2. **No routing conflicts:** `/sensors/{sensorId}` already uses a path parameter for sensor IDs. Adding `/sensors/type/{value}` creates ambiguity — JAX-RS cannot tell whether `type` is a sensor ID or a keyword.
+2. **No routing conflicts:** `/sensors/{sensorId}` already uses a path parameter for sensor IDs. Adding `/sensors/type/{value}` creates ambiguity - JAX-RS cannot tell whether `type` is a sensor ID or a keyword.
 
-3. **REST semantics:** Path segments should identify *resources* (specific rooms, sensors). Query parameters are the conventional REST idiom for *modifying the representation* — filtering, sorting, pagination, and searching. `?type=CO2` says "give me the sensors collection, filtered by type", not "navigate to a 'type' resource".
+3. **REST semantics:** Path segments should identify *resources* (specific rooms, sensors). Query parameters are the conventional REST idiom for *modifying the representation* - filtering, sorting, pagination, and searching. `?type=CO2` says "give me the sensors collection, filtered by type", not "navigate to a 'type' resource".
 
 4. **Composability:** Multiple filters compose naturally: `?type=CO2&status=ACTIVE`. Path-based approaches cannot stack without deeply nested and brittle URL designs.
 
@@ -443,11 +443,11 @@ The developer does not need to write any validation code for this. The framework
 
 ---
 
-### Part 4 – Sub-Resources
+### Part 4 - Sub-Resources
 
 #### Q7: Architectural Benefits of the Sub-Resource Locator Pattern
 
-The **Sub-Resource Locator** pattern delegates the handling of a nested path segment to a dedicated resource class. In this project, `SensorResource` has no `@GET`/`@POST` methods for `/readings` — it simply returns a `SensorReadingResource` instance:
+The **Sub-Resource Locator** pattern delegates the handling of a nested path segment to a dedicated resource class. In this project, `SensorResource` has no `@GET`/`@POST` methods for `/readings` - it simply returns a `SensorReadingResource` instance:
 
 ```java
 @Path("/{sensorId}/readings")
@@ -464,13 +464,13 @@ public SensorReadingResource getReadingsResource(@PathParam("sensorId") String s
 
 3. **Independent testing:** `SensorReadingResource` can be unit-tested in isolation by instantiating it directly with a `sensorId`, without needing to invoke the full request pipeline.
 
-4. **Lazy instantiation:** JAX-RS only instantiates `SensorReadingResource` when the `/readings` path is actually requested — no overhead for requests that don't need it.
+4. **Lazy instantiation:** JAX-RS only instantiates `SensorReadingResource` when the `/readings` path is actually requested - no overhead for requests that don't need it.
 
 5. **Scalability:** The pattern scales to arbitrary nesting depth. Adding `/readings/{readingId}/annotations` simply requires another locator in `SensorReadingResource`.
 
 ---
 
-### Part 5 – Error Handling & Logging
+### Part 5 - Error Handling & Logging
 
 #### Q8: Why HTTP 422 is More Semantically Accurate Than 404 for Missing References
 
@@ -482,11 +482,11 @@ When a client POSTs a new sensor with `"roomId": "NONEXISTENT-ROOM"`:
 
 **404 Not Found** means the *requested URL* was not found. Using 404 here would mislead the client into thinking the `/sensors` endpoint doesn't exist.
 
-**422 Unprocessable Entity** means: "I understand your request, I can parse your JSON, but the *semantic content* of the payload is invalid." It was designed precisely for this scenario — when the server understands the request structure but cannot process it due to business rule violations or invalid references within the data.
+**422 Unprocessable Entity** means: "I understand your request, I can parse your JSON, but the *semantic content* of the payload is invalid." It was designed precisely for this scenario - when the server understands the request structure but cannot process it due to business rule violations or invalid references within the data.
 
 RFC 4918 defines 422 as: *"The server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions."*
 
-Using 422 gives the client a precise, actionable signal: the problem is inside the payload data, specifically an invalid reference — not a wrong URL.
+Using 422 gives the client a precise, actionable signal: the problem is inside the payload data, specifically an invalid reference - not a wrong URL.
 
 ---
 
@@ -496,7 +496,7 @@ Exposing raw stack traces to API consumers is a **CWE-209 (Information Exposure 
 
 1. **Framework and library versions:** Stack traces reveal exact class names like `org.glassfish.jersey.server.ServerRuntime` or `com.fasterxml.jackson.databind.JsonMappingException`. The attacker looks up the version in Maven coordinates and searches CVE databases for known exploits targeting that specific version.
 
-2. **Internal package structure:** Full class paths (e.g., `com.smartcampus.resource.SensorResource.createSensor(SensorResource.java:87)`) reveal the application's internal architecture — package names, class names, and line numbers — making it far easier to reason about the codebase.
+2. **Internal package structure:** Full class paths (e.g., `com.smartcampus.resource.SensorResource.createSensor(SensorResource.java:87)`) reveal the application's internal architecture - package names, class names, and line numbers — making it far easier to reason about the codebase.
 
 3. **Technology fingerprinting:** A trace touching `org.apache.tomcat`, `jersey`, and `jackson` in sequence reveals the full stack: Tomcat + Jersey + Jackson. Each is a known attack surface.
 
@@ -504,17 +504,17 @@ Exposing raw stack traces to API consumers is a **CWE-209 (Information Exposure 
 
 5. **Exploit targeting:** Line numbers make it trivial to correlate with public decompiled code or GitHub repos, helping an attacker craft a precise payload that triggers a specific code path.
 
-**Mitigation (implemented):** The `GlobalExceptionMapper` logs the full trace server-side via `java.util.logging.Logger` where only authorised admins can see it, while returning only a generic `500 Internal Server Error` message to the client — no internal details whatsoever.
+**Mitigation (implemented):** The `GlobalExceptionMapper` logs the full trace server-side via `java.util.logging.Logger` where only authorised admins can see it, while returning only a generic `500 Internal Server Error` message to the client - no internal details whatsoever.
 
 ---
 
 #### Q10: Why JAX-RS Filters Are Better Than Manual Logger Calls for Cross-Cutting Concerns
 
-Logging is a **cross-cutting concern** — it applies to every endpoint regardless of business logic. The problems with manual `Logger.info()` calls in every resource method:
+Logging is a **cross-cutting concern** - it applies to every endpoint regardless of business logic. The problems with manual `Logger.info()` calls in every resource method:
 
 1. **DRY violation:** The same boilerplate is copy-pasted into dozens of methods. Any change to the log format requires touching every single method.
 
-2. **Inconsistency risk:** Developers forget to add logging to new methods. Some methods log before processing, others after — the log output becomes unreliable.
+2. **Inconsistency risk:** Developers forget to add logging to new methods. Some methods log before processing, others after - the log output becomes unreliable.
 
 3. **Exception blindspot:** If a resource method throws an exception before reaching the `Logger.info()` call, the request is never logged. Filters execute regardless of whether the method throws.
 
@@ -522,7 +522,7 @@ Logging is a **cross-cutting concern** — it applies to every endpoint regardle
 
 **Advantages of JAX-RS Filters:**
 
-- **Automatic application:** Registered once, applies to every request/response across the entire application — including future endpoints added by other developers.
+- **Automatic application:** Registered once, applies to every request/response across the entire application - including future endpoints added by other developers.
 - **Guaranteed execution:** `ContainerRequestFilter` fires before any resource method; `ContainerResponseFilter` fires after, even if an exception was mapped.
 - **Composable:** Multiple filters can be chained (e.g., logging + authentication + CORS) without modifying resource classes.
 - **Testable in isolation:** The filter can be unit-tested independently of any resource.
