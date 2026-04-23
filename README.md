@@ -355,9 +355,9 @@ curl -X GET http://localhost:8080/SmartCampusAPI/api/v1/rooms/FAKE-ROOM \
 
 By default, JAX-RS follows a **per-request lifecycle**: a new instance of each resource class is created for every incoming HTTP request and discarded after the response is sent. This means instance fields are never shared between requests.
 
-This architectural decision has direct implications for in-memory state management. If data were stored as instance fields in a resource class (e.g., `private Map<String, Room> rooms = new HashMap<>()`), each request would get its own fresh, empty map — meaning any data created in one request would be invisible to the next. This is data loss.
+This architectural decision has direct implications for in-memory state management. If data were stored as instance fields in a resource class (e.g., `private Map<String, Room> rooms = new HashMap<>()`), each request would get its own fresh, empty map - meaning any data created in one request would be invisible to the next. This is data loss.
 
-**Solution used in this project:** A **singleton `DataStore` class** backed by `ConcurrentHashMap` holds all application data. Since it is a single shared instance (via `DataStore.getInstance()`), all per-request resource instances access the same underlying maps. `ConcurrentHashMap` is used instead of `HashMap` because multiple request threads may read and write concurrently — `ConcurrentHashMap` provides thread-safe operations at the bucket level without requiring `synchronized` blocks on every method call, preventing race conditions while maintaining high throughput.
+**Answer:** A **singleton `DataStore` class** backed by `ConcurrentHashMap` holds all application data. Since it is a single shared instance (via `DataStore.getInstance()`), all per-request resource instances access the same underlying maps. `ConcurrentHashMap` is used instead of `HashMap` because multiple request threads may read and write concurrently - `ConcurrentHashMap` provides thread-safe operations at the bucket level without requiring `synchronized` blocks on every method call, preventing race conditions while maintaining high throughput.
 
 ---
 
@@ -367,13 +367,13 @@ This architectural decision has direct implications for in-memory state manageme
 
 **Benefits over static documentation:**
 
-1. **Self-discovery:** Clients navigate the API by following links in responses rather than hard-coding URLs. A client hitting `GET /api/v1` receives links to `/api/v1/rooms` and `/api/v1/sensors` directly in the JSON — no external docs required.
+1. **Self-discovery:** Clients navigate the API by following links in responses rather than hard-coding URLs. A client hitting `GET /api/v1` receives links to `/api/v1/rooms` and `/api/v1/sensors` directly in the JSON - no external docs required.
 
 2. **Reduced coupling:** If the server reorganises its URL structure (e.g., `/api/v2/rooms`), HATEOAS clients automatically follow the new links without code changes. Clients relying on static docs would break.
 
 3. **Discoverability:** Client developers can explore the API interactively. Each response acts as a menu of next possible actions.
 
-4. **Evolvability:** New capabilities can be added by introducing new link relations. Old clients that don't understand the new links simply ignore them — backwards compatibility is preserved.
+4. **Evolvability:** New capabilities can be added by introducing new link relations. Old clients that don't understand the new links simply ignore them - backwards compatibility is preserved.
 
 In this project, the Discovery endpoint (`GET /api/v1`) returns a `links` object with navigation pointers to all primary resource collections, embodying the HATEOAS principle.
 
